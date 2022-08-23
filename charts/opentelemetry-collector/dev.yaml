@@ -1,0 +1,466 @@
+topology:
+  services:
+    - serviceName: frontend
+      tagSets:
+        - weight: 1
+          flag_set: frontend_errors
+          tags:
+            version: v127
+            error: true
+        - weight: 1
+          flag_unset: frontend_errors
+          tags:
+            version: v125
+      resourceAttrSets:
+        - weight: 1
+          resourceAttrs:
+            cloud.provider: aws
+            cloud.region: us-east-1
+            k8s.cluster.name: k8s-cluster-1
+            host.name: ip-172-31-41-139.us-west-2.compute.internal
+            host.id: i-0109aa378a31b4e29
+        - weight: 1
+          resourceAttrs:
+            cloud.provider: aws
+            cloud.region: us-west-2
+            k8s.cluster.name: k8s-cluster-1
+            host.name: ip-172-31-41-140.us-west-2.compute.internal
+      metrics:
+        - name: another_gauge
+          type: Gauge
+          max: 10000
+          min: 1000
+          period: 2m
+          flag_set: frontend_doom.default
+          tags:
+            something: good
+        - name: another_gauge
+          type: Gauge
+          max: 20000
+          min: 10000
+          period: 2m
+          flag_set: frontend_doom.phase_1
+          tags:
+            something: bad
+        - name: another_gauge
+          type: Gauge
+          max: 50000
+          min: 0
+          period: 2m
+          shape: sawtooth
+          flag_set: frontend_doom.phase_2
+          tags:
+            something: worse
+        - name: a_whole_new_gauge
+          type: Gauge
+          max: 100
+          min: 0
+          period: 2m
+          shape: sawtooth
+          tags:
+            something: wonderful
+        - name: node_cpu_seconds_total
+          type: Sum
+          max: 100
+          min: 0
+          period: 2m
+          shape: sawtooth
+          tags:
+            host.name: frontend.internal
+            net.host.name: frontend.internal
+            cpu: "1"
+            namespace: hipster-shop
+        - name: node_memory_Active_bytes
+          type: Gauge
+          max: 50000
+          min: 0
+          period: 5m
+          shape: sawtooth
+          tags:
+            host.name: frontend.internal
+            net.host.name: frontend.internal
+            namespace: hipster-shop
+        - name: node_memory_MemTotal_bytes
+          type: Gauge
+          max: 2147483648
+          min: 1000000000
+          period: 5m
+          shape: sawtooth
+          tags:
+            host.name: frontend.internal
+            net.host.name: frontend.internal
+            namespace: hipster-shop
+        - name: node_memory_MemAvailable_bytes
+          type: Gauge
+          max: 2147483648
+          min: 20000
+          period: 5m
+          shape: sawtooth
+          flag_unset: currencyservice_oom.phase_2
+          tags:
+            host.name: frontend.internal
+            net.host.name: frontend.internal
+            namespace: hipster-shop
+        - name: node_memory_MemAvailable_bytes
+          type: Gauge
+          max: 200000
+          min: 20000
+          period: 5m
+          shape: sawtooth
+          flag_set: currencyservice_oom.phase_2
+          tags:
+            host.name: frontend.internal
+            net.host.name: frontend.internal
+            namespace: hipster-shop
+        - name: container_cpu_usage_seconds_total
+          type: Sum
+          max: 200
+          min: 0
+          period: 2m
+          shape: triangle
+          tags:
+            host.name: frontend.internal
+            cpu: "1"
+            namespace: hipster-shop  
+      routes:
+        - route: /product
+          downstreamCalls:
+            productcatalogservice: /GetProducts
+            recommendationservice: /GetRecommendations
+            adservice: /AdRequest
+          maxLatencyMillis: 200
+          tagSets:
+            - weight: 1
+              tags:
+                starter: charmander
+              tagGenerators:
+                - numTags: 50
+                  numVals: 3000
+                  valLength: 16
+            - weight: 1
+              tags:
+                starter: squirtle
+            - weight: 1
+              tags:
+                starter: bulbasaur
+        - route: /cart
+          downstreamCalls:
+            cartservice: /GetCart
+            recommendationservice: /GetRecommendations
+          maxLatencyMillis: 100
+        - route: /checkout
+          downstreamCalls:
+            checkoutservice: /PlaceOrder
+          maxLatencyMillis: 800
+        - route: /shipping
+          downstreamCalls:
+            shippingservice: /GetQuote
+          maxLatencyMillis: 50
+        - route: /currency
+          downstreamCalls:
+            currencyservice: /GetConversion
+          maxLatencyMillis: 1500
+        - route: /currency_slow
+          downstreamCalls:
+            currencyservice: /DoSomethingSlow
+          flag_set: currencyservice_oom.phase_1
+          maxLatencyMillis: 3500
+    - serviceName: productcatalogservice
+      tagSets:
+        - tags:
+            version: v52
+          inherit:
+            - region
+      resourceAttrSets:
+        - weight: 1
+          resourceAttrs:
+            cloud.provider: azure
+            cloud.region: Central-US
+            k8s.cluster.name: k8s-cluster-2
+            host.type: t3.medium
+            host.name: productcatalogservice-d847fdcf5-j6s2f
+        - weight: 1
+          resourceAttrs:
+            cloud.provider: azure
+            cloud.region: West-US
+            k8s.cluster.name: k8s-cluster-2
+            host.type: t3.medium
+            host.name: productcatalogservice-6b654dbf57-zq8dt
+      routes:
+        - route: /GetProducts
+          downstreamCalls: {}
+          maxLatencyMillis: 100
+          tagSets:
+            - inherit:
+                - starter
+        - route: /SearchProducts
+          downstreamCalls: {}
+          tagSets:
+            - weight: 15
+              tags:
+                error: true
+                http.status_code: 503
+            - weight: 85
+              tags: {}
+          maxLatencyMillis: 400
+    - serviceName: recommendationservice
+      tagSets:
+        - tags:
+            version: v234
+            region: us-east-1
+      resourceAttrSets:
+        - weight: 1
+          resourceAttrs:
+            cloud.provider: aws
+            cloud.region: us-west-2
+            k8s.cluster.name: k8s-cluster-3
+            host.name: recommendationservice-6b654dbf57-zq8dt
+        - weight: 1
+          resourceAttrs:
+            cloud.provider: aws
+            cloud.region: us-west-1
+            k8s.cluster.name: k8s-cluster-3
+            host.name: recommendationservice-d847fdcf5-j6s2f
+      routes:
+        - route: /GetRecommendations
+          downstreamCalls:
+            productcatalogservice: /GetProducts
+          maxLatencyMillis: 200
+    - serviceName: cartservice
+      tagSets:
+        - tags:
+            version: v5
+            region: us-east-1
+          flag_unset: runs_on_azure
+        - tags:
+            region: North_Central_US
+          flag_set: runs_on_azure
+      resourceAttrSets:
+        - weight: 1
+          resourceAttrs:
+            host.name: cartservice-hostname
+      routes:
+        - route: /GetCart
+          downstreamCalls: {}
+          maxLatencyMillis: 200
+    - serviceName: checkoutservice
+      tagSets:
+        - tags:
+            version: v37
+            region: us-east-1
+      resourceAttrSets:
+        - weight: 1
+          resourceAttrs:
+            host.name: checkoutservice-hostname
+      routes:
+        - route: /PlaceOrder
+          downstreamCalls:
+            paymentservice: /CreditCardInfo
+            shippingservice: /Address
+            currencyservice: /GetConversion
+            cartservice: /GetCart
+            emailservice: /SendOrderConfirmation
+          tagSets:
+            - weight: 25
+              tags:
+                error: true
+                http.status_code: 503
+            - weight: 85
+              tags: {}
+          maxLatencyMillis: 500
+    - serviceName: paymentservice
+      tagSets:
+        - tags:
+            version: v177
+            region: us-east-1
+      resourceAttrSets:
+        - weight: 1
+          resourceAttrs:
+            host.name: paymentservice-hostname
+      routes:
+        - route: /ChargeRequest
+          downstreamCalls:
+            paymentservice: /CreditCardInfo
+          maxLatencyMillis: 700
+        - route: /CreditCardInfo
+          downstreamCalls: {}
+          maxLatencyMillis: 50
+    - serviceName: shippingservice
+      tagSets:
+        - tags:
+            version: v127
+            region: us-east-1
+      resourceAttrSets:
+        - weight: 1
+          resourceAttrs:
+            host.name: shippingservice-hostname
+      routes:
+        - route: /GetQuote
+          downstreamCalls:
+            shippingservice: /Address
+          maxLatencyMillis: 250
+        - route: /ShipOrder
+          downstreamCalls:
+            shippingservice: /Address
+          maxLatencyMillis: 500
+        - route: /Address
+          downstreamCalls: {}
+          maxLatencyMillis: 100
+    - serviceName: emailservice
+      tagSets:
+        - tags:
+            version: v27
+            region: us-east-1
+      resourceAttrSets:
+        - weight: 1
+          resourceAttrs:
+            host.name: emailservice-hostname
+      routes:
+        - route: /SendOrderConfirmation
+          downstreamCalls:
+            emailservice: /OrderResult
+          tagSets:
+            - weight: 15
+              tags:
+                error: true
+                service.version: v122
+                http.status_code: 503
+            - weight: 85
+              tags: {}
+          maxLatencyMillis: 500
+        - route: /OrderResult
+          downstreamCalls: {}
+          maxLatencyMillis: 100
+    - serviceName: currencyservice
+      tagSets:
+        - tags:
+            version: v27
+            region: us-east-1
+      resourceAttrSets:
+        - weight: 1
+          resourceAttrs:
+            host.name: currencyservice-hostname
+      metrics:
+        - name: node_memory_MemTotal_bytes
+          type: Gauge
+          max: 2147483648
+          min: 2000000000
+          period: 5m
+          shape: sawtooth    
+          tags:
+            host.name: currencyservice.internal
+            net.host.name: currencyservice.internal
+            namespace: hipster-shop
+        - name: node_memory_MemAvailable_bytes
+          type: Gauge
+          max: 1500000000
+          min: 1000000000
+          flag_set: currencyservice_oom.default
+          period: 5m
+          shape: sawtooth
+          tags:
+            host.name: currencyservice.internal
+            net.host.name: currencyservice.internal
+            namespace: hipster-shop
+        - name: node_memory_MemAvailable_bytes
+          type: Gauge
+          flag_set: currencyservice_oom.phase_1
+          max: 10000000
+          min: 2000000
+          period: 5m
+          shape: sawtooth
+          tags:
+            host.name: currencyservice.internal
+            net.host.name: currencyservice.internal
+            namespace: hipster-shop
+      routes:
+        - route: /GetConversion
+          downstreamCalls:
+            currencyservice: /Money
+          maxLatencyMillis: 100
+        - route: /Money
+          downstreamCalls: {}
+          maxLatencyMillis: 100
+        - route: /DoSomethingSlow
+          downstreamCalls: {}
+          maxLatencyMillis: 4000
+          flag_set: currencyservice_oom.phase_1
+    - serviceName: adservice
+      tagSets:
+        - version: v37
+          region: us-east-1
+      resourceAttrSets:
+        - weight: 1
+          resourceAttrs:
+            host.name: adservice-hostname
+      routes:
+        - route: /AdRequest
+          downstreamCalls: {}
+          maxLatencyMillis: 500
+        - route: /Ad
+          downstreamCalls: {}
+          maxLatencyMillis: 500
+
+flags:
+  # This is a cron-style flag
+  - name: frontend_errors
+    # use https://crontab.guru/
+    cron:
+      start: "0,10,20,30,40,50 * * * *"
+      end: "5,15,25,35,45,55 * * * *"
+  - name: runs_on_azure
+  - name: sev0_total_failure
+  - name: database_outage
+  # OOM on currency service + slower span latency from frontend -> currencyservice
+  - name: currencyservice_oom.default
+    incident:
+      name: currencyservice_fail
+      start: 0m
+      end: 10m
+  - name: currencyservice_oom.phase_1
+    incident:
+      name: currencyservice_fail
+      start: 0m
+      end: 10m
+  - name: currencyservice_oom.phase_2
+    incident:
+      name: currencyservice_fail
+      start: 3m
+      end: 10m
+  # This is an incident-style flag; start and end are relative to incident start
+  - name: frontend_doom.default # .default flags are enabled when the incident is not active
+    incident:
+      name: frontend_doom
+  - name: frontend_doom.phase_1
+    incident:
+      name: frontend_doom
+      start: 0m
+      end: 10m
+  - name: frontend_doom.phase_2
+    incident:
+      name: frontend_doom
+      start: 5m
+    # with no end, lasts until the incident finishes
+
+rootRoutes:
+  - service: frontend
+    route: /product
+    tracesPerHour: 2880
+  - service: frontend
+    route: /cart
+    tracesPerHour: 1400
+  - service: frontend
+    route: /shipping
+    tracesPerHour: 480
+  - service: frontend
+    route: /currency
+    tracesPerHour: 200
+  - service: frontend
+    route: /checkout
+    tracesPerHour: 480
+
+incidents:
+  - name: frontend_doom
+    start: "10,25,40,55 * * * *"
+    end: "7,22,37,52 * * * *"
+

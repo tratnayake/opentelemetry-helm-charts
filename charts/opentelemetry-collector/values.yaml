@@ -6,7 +6,7 @@ nameOverride: ""
 fullnameOverride: ""
 
 # Valid values are "daemonset", "deployment", and "statefulset".
-mode: ""
+mode: "deployment"
 
 # Handles basic configuration of components that
 # also require k8s modifications to work correctly.
@@ -37,91 +37,64 @@ configMap:
   create: true
 
 config:
-  exporters:
-    logging: {}
-  extensions:
-    # The health_check extension is mandatory for this chart.
-    # Without the health_check extension the collector will fail the readiness and liveliness probes.
-    # The health_check extension can be modified, but should never be removed.
-    health_check: {}
-    memory_ballast: {}
+  receivers:
+    # Generate traces from the given topology file (env var: TOPO_FILE)
+    generator:
+      path: "${TOPO_FILE}"
+      api:
+        endpoint: 0.0.0.0:9999
+        cors_allowed_origins:
+          - '*'
+
   processors:
     batch: {}
-    # If set to null, will be overridden with values based on k8s resource limits
-    memory_limiter: null
-  receivers:
-    jaeger:
-      protocols:
-        grpc:
-          endpoint: 0.0.0.0:14250
-        thrift_http:
-          endpoint: 0.0.0.0:14268
-        thrift_compact:
-          endpoint: 0.0.0.0:6831
+
+    spanmetrics:
+      metrics_exporter: otlp
+      dimensions:
+        - name: http.method
+
+  exporters:
+    logging: {}
+    # Export to Lightstep Public Satellites
     otlp:
-      protocols:
-        grpc:
-          endpoint: 0.0.0.0:4317
-        http:
-          endpoint: 0.0.0.0:4318
-    prometheus:
-      config:
-        scrape_configs:
-          - job_name: opentelemetry-collector
-            scrape_interval: 10s
-            static_configs:
-              - targets:
-                  - ${MY_POD_IP}:8888
-    zipkin:
-      endpoint: 0.0.0.0:9411
+      endpoint: "${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT}"
+      insecure_skip_verify: true
+      insecure: "${OTEL_INSECURE}"
+      headers:
+        "lightstep-access-token": "${LS_ACCESS_TOKEN}"
+
   service:
-    telemetry:
-      metrics:
-        address: 0.0.0.0:8888
-    extensions:
-      - health_check
-      - memory_ballast
     pipelines:
-      logs:
-        exporters:
-          - logging
-        processors:
-          - memory_limiter
-          - batch
-        receivers:
-          - otlp
       metrics:
-        exporters:
-          - logging
-        processors:
-          - memory_limiter
-          - batch
         receivers:
+          - generator
+        processors:
+          - batch
+        exporters:
           - otlp
-          - prometheus
+          - logging
+
       traces:
+        receivers:
+          - generator
+        processors:
+          - spanmetrics
+          - batch
         exporters:
           - logging
-        processors:
-          - memory_limiter
-          - batch
-        receivers:
           - otlp
-          - jaeger
-          - zipkin
 
 image:
   # If you want to use the core image `otel/opentelemetry-collector`, you also need to change `command.name` value to `otelcol`.
-  repository: otel/opentelemetry-collector-contrib
+  repository: gcr.io/terraform-shop-public/telemetry-generator
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
-imagePullSecrets: []
+  tag: 0.0.5
 
 # OpenTelemetry Collector executable
 command:
-  name: otelcol-contrib
-  extraArgs: []
+  name: telemetry-generator
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -169,9 +142,16 @@ affinity: {}
 # Allows for pod scheduler prioritisation
 priorityClassName: ""
 
-extraEnvs: []
-extraVolumes: []
-extraVolumeMounts: []
+extraVolumes:
+  - name: topo-volume
+    configMap:
+      name: telemetry-generator-topo
+      items:
+        - key: dev.yaml
+          path: dev.yaml
+extraVolumeMounts:
+  - name: topo-volume
+    mountPath: /etc/otel
 
 # Configuration for ports
 ports:
@@ -181,52 +161,14 @@ ports:
     servicePort: 4317
     hostPort: 4317
     protocol: TCP
-  otlp-http:
-    enabled: true
-    containerPort: 4318
-    servicePort: 4318
-    hostPort: 4318
-    protocol: TCP
-  jaeger-compact:
-    enabled: true
-    containerPort: 6831
-    servicePort: 6831
-    hostPort: 6831
-    protocol: UDP
-  jaeger-thrift:
-    enabled: true
-    containerPort: 14268
-    servicePort: 14268
-    hostPort: 14268
-    protocol: TCP
-  jaeger-grpc:
-    enabled: true
-    containerPort: 14250
-    servicePort: 14250
-    hostPort: 14250
-    protocol: TCP
-  zipkin:
-    enabled: true
-    containerPort: 9411
-    servicePort: 9411
-    hostPort: 9411
-    protocol: TCP
-  metrics:
-    # The metrics port is disabled by default. However you need to enable the port
-    # in order to use the ServiceMonitor (serviceMonitor.enabled) or PodMonitor (podMonitor.enabled).
-    enabled: false
-    containerPort: 8888
-    servicePort: 8888
-    protocol: TCP
 
-# Deprecated.  Use presets.logsCollection instead.
 containerLogs:
   enabled: false
 
 resources:
   limits:
     cpu: 1
-    memory: 2Gi
+    memory: 1Gi
 
 podAnnotations: {}
 
@@ -355,3 +297,12 @@ statefulset:
   # volumeClaimTemplates for a statefulset
   volumeClaimTemplates: []
   podManagementPolicy: "Parallel"
+
+extraEnvs:
+  - name: TOPO_FILE
+    value: /etc/otel/dev.yaml
+  - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+    value: ingest.lightstep.com:443
+
+
+access_token: none

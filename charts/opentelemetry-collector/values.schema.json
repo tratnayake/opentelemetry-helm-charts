@@ -210,6 +210,9 @@
         "type": "object"
       }
     },
+    "access_token": {
+      "type": "string"
+    },
     "extraConfigMapMounts": {
       "type": "array",
       "items": {

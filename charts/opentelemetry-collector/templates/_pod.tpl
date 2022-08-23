@@ -37,6 +37,11 @@ containers:
           fieldRef:
             apiVersion: v1
             fieldPath: status.podIP
+      - name: LS_ACCESS_TOKEN
+        valueFrom:
+          secretKeyRef:
+            key: access_token
+            name: {{ .Release.Name }}-auth
       {{- if .Values.presets.hostMetrics.enabled }}
       - name: HOST_PROC
         value: /hostfs/proc
