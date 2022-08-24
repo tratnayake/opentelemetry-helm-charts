@@ -3,4 +3,4 @@ kind: ConfigMap
 metadata:
   name: telemetry-generator-topo
 data:
-  dev.yaml: {{ tpl (.Files.Get "dev.yaml") . | quote }}
+  scenario.yaml: {{ tpl (.Files.Get "custom_scenario_1.yaml") . | quote }}

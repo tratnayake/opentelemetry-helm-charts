@@ -149,8 +149,9 @@ extraVolumes:
     configMap:
       name: telemetry-generator-topo
       items:
-        - key: dev.yaml
-          path: dev.yaml
+      # The scenario file is set in topo.yaml
+        - key: scenario.yaml
+          path: scenario.yaml
 extraVolumeMounts:
   - name: topo-volume
     mountPath: /etc/otel
@@ -302,7 +303,7 @@ statefulset:
 
 extraEnvs:
   - name: TOPO_FILE
-    value: /etc/otel/dev.yaml
+    value: /etc/otel/scenario.yaml
   - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
   # By default set to use staging endpoint (so as to not pollute production)
     value: ingest.staging.lightstep.com:443 
