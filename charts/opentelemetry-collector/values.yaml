@@ -87,14 +87,16 @@ config:
 
 image:
   # If you want to use the core image `otel/opentelemetry-collector`, you also need to change `command.name` value to `otelcol`.
+  # NOTE: Default set to use `terraform-shop-public` for development work. 
   repository: gcr.io/terraform-shop-public/telemetry-generator
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: 0.0.5
+  # NOTE: This image tag will change
+  tag: 0.0.6
 
 # OpenTelemetry Collector executable
 command:
-  name: telemetry-generator
+  name: otel/telemetry-generator
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -296,13 +298,14 @@ prometheusRule:
 statefulset:
   # volumeClaimTemplates for a statefulset
   volumeClaimTemplates: []
-  podManagementPolicy: "Parallel"
+  podManagementPolicy:  "Parallel"
 
 extraEnvs:
   - name: TOPO_FILE
     value: /etc/otel/dev.yaml
   - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
-    value: ingest.lightstep.com:443
+  # By default set to use staging endpoint (so as to not pollute production)
+    value: ingest.staging.lightstep.com:443 
 
-
+# NOTE: This needs to be set at runtime by using `helm [...] --set access_token=$LS_ACCESS_TOKEN`
 access_token: none
