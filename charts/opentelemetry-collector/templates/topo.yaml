@@ -1,6 +1,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: telemetry-generator-topo
+{{- with (first .Values.extraVolumes) }}
+  name: {{ .configMap.name }}
+{{- end }}
 data:
-  scenario.yaml: {{ tpl (.Files.Get "custom_scenario_1.yaml") . | quote }}
+  scenario.yaml: {{ tpl (.Files.Get (printf "scenario/%s.yaml" .Values.scenario_file) ) . | quote }}
+  # scenario.yaml: {{ tpl (.Files.Get "scenario_1.yaml") . | quote }}
+  # scenario.yaml: {{ tpl (.Files.Get .Values.scenario_file ) . | quote }}

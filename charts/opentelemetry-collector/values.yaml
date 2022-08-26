@@ -147,9 +147,10 @@ priorityClassName: ""
 extraVolumes:
   - name: topo-volume
     configMap:
-      name: telemetry-generator-topo
+    # This configMap name must be unique in the cluster
+    # in order to run multiple deployments.
+      name: scenario1
       items:
-      # The scenario file is set in topo.yaml
         - key: scenario.yaml
           path: scenario.yaml
 extraVolumeMounts:
@@ -310,3 +311,6 @@ extraEnvs:
 
 # NOTE: This needs to be set at runtime by using `helm [...] --set access_token=$LS_ACCESS_TOKEN`
 access_token: none
+# NOTE: This points to the filename of the scenario in ./scenarios/
+# -  This needs to be set up at runtime by using --set scenario_file=scenario1
+scenario_file: scenario1

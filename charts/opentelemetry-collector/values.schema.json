@@ -213,6 +213,9 @@
     "access_token": {
       "type": "string"
     },
+    "scenario_file":{
+      "type": "string"
+    },
     "extraConfigMapMounts": {
       "type": "array",
       "items": {
