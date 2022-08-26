@@ -63,14 +63,7 @@ containers:
     lifecycle:
       {{- toYaml .Values.lifecycleHooks | nindent 6 }}
     {{- end }}
-    livenessProbe:
-      httpGet:
-        path: /
-        port: 13133
-    readinessProbe:
-      httpGet:
-        path: /
-        port: 13133
+    
     resources:
       {{- toYaml .Values.resources | nindent 6 }}
     volumeMounts:
