@@ -6,11 +6,11 @@ command-template:
 
 
 command-2:
-	helm upgrade --install -n sales-dev  -f values.yaml --set "access_token=$LS_ACCESS_TOKEN,scenario_file=scenario1" scenario1 ./
+	helm upgrade --install -n sales-dev  -f values.yaml --set "access_token=${LS_ACCESS_TOKEN},scenario_file=scenario_1" scenario1 ./
 
 command-template-2:
-	helm template  -f values.yaml --set "access_token=$LS_ACCESS_TOKEN" scenario1 ./
+	helm template  -f values.yaml --set "access_token=${LS_ACCESS_TOKEN},scenario_file=scenario_1" scenario1 ./
 
 command-template-2-debug:
-	helm template --debug  -f values.yaml --set "access_token=$LS_ACCESS_TOKEN,scenario_file=scenario1" scenario1 ./
+	helm template --debug  -f values.yaml --set "access_token=${LS_ACCESS_TOKEN},scenario_file=scenario_1" scenario1 ./
 

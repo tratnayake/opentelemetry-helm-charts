@@ -126,7 +126,7 @@ priorityClassName: {{ .Values.priorityClassName | quote }}
 volumes:
   - name: test-scenarios
     configMap:
-      name: {{ .Chart.Name }}-topo-configmap
+      name: {{ .Release.Name }}-topo-configmap
   {{- if .Values.configMap.create }}
   - name: {{ .Chart.Name }}-configmap
     configMap:

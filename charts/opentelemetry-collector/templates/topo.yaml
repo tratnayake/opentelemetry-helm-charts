@@ -2,15 +2,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Chart.Name }}-topo-configmap
+  name: {{ .Release.Name }}-topo-configmap
 data:
-  # REF: https://stackoverflow.com/questions/47595295/how-do-i-load-multiple-templated-config-files-into-a-helm-chart
-  {{- $files := .Files }}
-  {{- range $key, $value := .Files }}
-  {{- if hasPrefix "scenarios/" $key }} {{/* only when in scenaris-dir/ */}}
-  {{ $key | trimPrefix "scenarios/" }}: {{ $files.Get $key | quote }} {{/* adapt $key as desired */}}
-  {{- end }}
-  {{- end }}
-  #scenario.yaml: {{ tpl (.Files.Get (printf "scenario/%s.yaml" .Values.scenario_file) ) . | quote }}
-  # scenario.yaml: {{ tpl (.Files.Get "scenario_1.yaml") . | quote }}
-  # scenario.yaml: {{ tpl (.Files.Get .Values.scenario_file ) . | quote }}
+  {{- range $path, $_ :=  .Files.Glob  "scenarios/**.yaml" }}    
+  {{ $path | trimPrefix "scenarios/" }}: |- 
+{{ $.Files.Get $path | indent 4 }}
+  {{ end }}
+
