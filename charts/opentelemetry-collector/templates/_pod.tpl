@@ -42,6 +42,8 @@ containers:
           secretKeyRef:
             key: access_token
             name: {{ .Release.Name }}-auth
+      - name: TOPO_FILE
+        value: "{{ .Values.scenario_file }}"
       {{- if .Values.presets.hostMetrics.enabled }}
       - name: HOST_PROC
         value: /hostfs/proc
@@ -70,6 +72,8 @@ containers:
       {{- if .Values.configMap.create }}
       - mountPath: /conf
         name: {{ .Chart.Name }}-configmap
+      - mountPath: /etc/otel/scenarios
+        name: test-scenarios
       {{- end }}
       {{- range .Values.extraConfigMapMounts }}
       - name: {{ .name }}
@@ -120,6 +124,9 @@ initContainers:
 priorityClassName: {{ .Values.priorityClassName | quote }}
 {{- end }}
 volumes:
+  - name: test-scenarios
+    configMap:
+      name: {{ .Chart.Name }}-topo-configmap
   {{- if .Values.configMap.create }}
   - name: {{ .Chart.Name }}-configmap
     configMap:

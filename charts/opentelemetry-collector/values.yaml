@@ -40,7 +40,7 @@ config:
   receivers:
     # Generate traces from the given topology file (env var: TOPO_FILE)
     generator:
-      path: "/etc/otel/${TOPO_FILENAME}.yaml"
+      path: "/etc/otel/scenarios/${TOPO_FILE}.yaml"
       api:
         endpoint: 0.0.0.0:9999
         cors_allowed_origins:
@@ -144,15 +144,15 @@ affinity: {}
 # Allows for pod scheduler prioritisation
 priorityClassName: ""
 
-extraVolumes:
-  - name: topo-volume
-    configMap:
-    # This configMap name must be unique in the cluster
-    # in order to run multiple deployments.
-      name: ""
-extraVolumeMounts:
-  - name: topo-volume
-    mountPath: /etc/otel
+# extraVolumes:
+#   - name: topo-volume
+#     configMap:
+#     # This configMap name must be unique in the cluster
+#     # in order to run multiple deployments.
+#       name: ""
+# extraVolumeMounts:
+#   - name: topo-volume
+#     mountPath: /etc/otel
 
 # Configuration for ports
 ports:
@@ -300,8 +300,8 @@ statefulset:
   podManagementPolicy:  "Parallel"
 
 extraEnvs:
-  - name: TOPO_FILENAME
-    value: ""
+  # - name: TOPO_FILENAME
+  #   value: ""
   - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
   # By default set to use staging endpoint (so as to not pollute production)
     value: ingest.staging.lightstep.com:443
@@ -310,4 +310,4 @@ extraEnvs:
 access_token: none
 # NOTE: This points to the filename of the scenario in ./scenarios/
 # -  This needs to be set up at runtime by using --set scenario_file=scenario1
-scenario_file: ""
+scenario_file: "default"

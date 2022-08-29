@@ -1,9 +1,8 @@
+# Create a new config map for every Deployment.
 apiVersion: v1
 kind: ConfigMap
 metadata:
-{{- with (first .Values.extraVolumes) }}
-  name: {{ .configMap.name }}
-{{- end }}
+  name: {{ .Chart.Name }}-topo-configmap
 data:
   # REF: https://stackoverflow.com/questions/47595295/how-do-i-load-multiple-templated-config-files-into-a-helm-chart
   {{- $files := .Files }}
